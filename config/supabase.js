@@ -12,8 +12,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env');
-    process.exit(1);
+    throw new Error('❌ Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in Environment Variables');
 }
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {

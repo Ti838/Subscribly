@@ -91,9 +91,12 @@ app.use((err, req, res, next) => {
 });
 
 // ─── Start ─────────────────────────────────────────────────────────────────
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-    console.log(`
+// On Vercel, the app is exported and handled by the platform.
+// We only listen locally or if not on Vercel.
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => {
+        console.log(`
 ╔══════════════════════════════════════════════════╗
 ║       Subscribly API v2 — Supabase Edition       ║
 ╠══════════════════════════════════════════════════╣
@@ -102,7 +105,8 @@ app.listen(PORT, () => {
 ║  Database : Supabase (PostgreSQL)                ║
 ║  Health   : http://localhost:${PORT}                 ║
 ╚══════════════════════════════════════════════════╝
-  `);
-});
+    `);
+    });
+}
 
 module.exports = app;
