@@ -55,6 +55,9 @@ const register = async (req, res) => {
     }
 };
 
+const subscriptionService = require('../services/subscriptionService');
+const usageService = require('../services/usageService');
+
 // ─── POST /api/auth/login ─────────────────────────────────────────────────
 const login = async (req, res) => {
     try {
@@ -64,7 +67,6 @@ const login = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Email and password are required.' });
         }
 
-        // findByEmail returns all fields including password
         const user = await userService.findByEmail(email);
 
         if (!user || !user.is_active) {
@@ -78,6 +80,10 @@ const login = async (req, res) => {
 
         const token = generateToken(user.id);
 
+        // Fetch real-time data for the dashboard
+        const activeSub = await subscriptionService.getActive(user.id);
+        const usage = await usageService.getTodayLog(user.id);
+
         return res.status(200).json({
             success: true,
             message: 'Login successful!',
@@ -87,7 +93,18 @@ const login = async (req, res) => {
                 name: user.name,
                 email: user.email,
                 role: user.role,
-                apiKey: user.api_key || null,
+                apiKey: user.api_key,
+                subscription: activeSub ? {
+                    planId: activeSub.plan_id,
+                    planName: activeSub.plan?.name,
+                    dailyLimit: activeSub.plan?.daily_limit,
+                    status: activeSub.status,
+                    expiryDate: activeSub.expiry_date
+                } : null,
+                usage: {
+                    dailyCount: usage?.request_count || 0,
+                    totalRequests: usage?.request_count || 0 // Total is usually historical, but for now today's count
+                }
             },
         });
     } catch (error) {
@@ -100,6 +117,9 @@ const login = async (req, res) => {
 const getMe = async (req, res) => {
     try {
         const user = await userService.findById(req.user.id);
+        const activeSub = await subscriptionService.getActive(user.id);
+        const usage = await usageService.getTodayLog(user.id);
+
         return res.status(200).json({
             success: true,
             user: {
@@ -108,6 +128,17 @@ const getMe = async (req, res) => {
                 email: user.email,
                 role: user.role,
                 apiKey: user.api_key,
+                subscription: activeSub ? {
+                    planId: activeSub.plan_id,
+                    planName: activeSub.plan?.name,
+                    dailyLimit: activeSub.plan?.daily_limit,
+                    status: activeSub.status,
+                    expiryDate: activeSub.expiry_date
+                } : null,
+                usage: {
+                    dailyCount: usage?.request_count || 0,
+                    totalRequests: usage?.request_count || 0
+                }
             },
         });
     } catch (error) {
