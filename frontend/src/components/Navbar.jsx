@@ -1,56 +1,60 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Zap, LogOut, LayoutDashboard, User } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
+import { Zap, LogOut, LayoutDashboard, User, Moon, Sun } from 'lucide-react';
 
 const Navbar = () => {
-    const { user, logout } = useAuth();
+  const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
-    return (
-        <nav className="navbar glass-card">
-            <div className="nav-container">
-                <Link to="/" className="nav-logo">
-                    <Zap size={28} className="logo-icon" fill="#7c3bed" color="#7c3bed" />
-                    <span className="logo-text">Subscribly</span>
-                </Link>
+  return (
+    <nav className="navbar glass-card">
+      <div className="nav-container">
+        <Link to="/" className="nav-logo">
+          <Zap size={24} className="logo-icon" fill="var(--primary)" color="var(--primary)" />
+          <span className="logo-text">Subscribly</span>
+        </Link>
 
-                <div className="nav-links">
-                    {user ? (
-                        <>
-                            <Link to="/dashboard" className="nav-item">
-                                <LayoutDashboard size={20} />
-                                <span>Dashboard</span>
-                            </Link>
-                            <div className="nav-profile">
-                                <User size={20} />
-                                <span>{user.name}</span>
-                            </div>
-                            <button onClick={logout} className="nav-logout-btn">
-                                <LogOut size={20} />
-                            </button>
-                        </>
-                    ) : (
-                        <>
-                            <Link to="/login" className="nav-btn-secondary">Login</Link>
-                            <Link to="/register" className="btn-primary">Get Started</Link>
-                        </>
-                    )}
-                </div>
-            </div>
+        <div className="nav-links">
+          <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle Theme">
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          </button>
 
-            <style jsx="true">{`
+          {user ? (
+            <>
+              <Link to="/dashboard" className="nav-item">
+                <LayoutDashboard size={18} />
+                <span className="hide-mobile">Dashboard</span>
+              </Link>
+              <div className="nav-profile hide-mobile">
+                <User size={18} />
+                <span>{user.name.split(' ')[0]}</span>
+              </div>
+              <button onClick={logout} className="nav-logout-btn">
+                <LogOut size={18} />
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="nav-link-subtle">Login</Link>
+              <Link to="/register" className="btn-primary btn-sm">Get Started</Link>
+            </>
+          )}
+        </div>
+      </div>
+
+      <style jsx="true">{`
         .navbar {
           position: fixed;
-          top: 20px;
+          top: 15px;
           left: 50%;
           transform: translateX(-50%);
-          width: 90%;
-          max-width: 1200px;
-          padding: 12px 24px;
+          width: 95%;
+          max-width: 1000px;
+          padding: 8px 16px;
           z-index: 1000;
-          display: flex;
-          align-items: center;
-          justify-content: center;
+          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .nav-container {
           width: 100%;
@@ -61,55 +65,85 @@ const Navbar = () => {
         .nav-logo {
           display: flex;
           align-items: center;
-          gap: 10px;
-          font-size: 1.5rem;
+          gap: 8px;
+          font-size: 1.2rem;
           font-weight: 800;
-          color: white;
+          color: var(--text-main);
         }
         .logo-icon {
-          filter: drop-shadow(0 0 8px var(--primary));
+          filter: drop-shadow(0 0 5px var(--primary-glow));
         }
         .nav-links {
           display: flex;
           align-items: center;
-          gap: 20px;
+          gap: 16px;
         }
-        .nav-item {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          color: var(--text-muted);
-          font-weight: 500;
-        }
-        .nav-item:hover {
-          color: var(--primary);
-        }
-        .nav-btn-secondary {
-          color: white;
-          font-weight: 600;
-        }
-        .nav-profile {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: rgba(255, 255, 255, 0.05);
-          padding: 6px 12px;
-          border-radius: 20px;
-          border: 1px solid var(--border-glass);
-        }
-        .nav-logout-btn {
+        .theme-toggle {
           background: none;
           border: none;
           color: var(--text-muted);
           cursor: pointer;
-          transition: color 0.3s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.3s ease;
+        }
+        .theme-toggle:hover {
+          transform: rotate(15deg);
+          color: var(--primary);
+        }
+        .nav-item {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          color: var(--text-muted);
+          font-weight: 600;
+          font-size: 0.9rem;
+        }
+        .nav-item:hover {
+          color: var(--primary);
+        }
+        .nav-link-subtle {
+          color: var(--text-muted);
+          font-weight: 600;
+          font-size: 0.9rem;
+        }
+        .nav-link-subtle:hover {
+          color: var(--text-main);
+        }
+        .nav-profile {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          background: var(--bg-glass);
+          padding: 4px 10px;
+          border-radius: 30px;
+          border: 1px solid var(--border-glass);
+          font-size: 0.85rem;
+          color: var(--text-main);
+          font-weight: 500;
+        }
+        .btn-sm {
+          padding: 8px 16px;
+          font-size: 0.85rem;
+          border-radius: 10px;
+        }
+        .nav-logout-btn {
+          background: none;
+          border: none;
+          color: var(--text-dim);
+          cursor: pointer;
+          padding: 4px;
         }
         .nav-logout-btn:hover {
           color: #ef4444;
         }
+        @media (max-width: 600px) {
+          .hide-mobile { display: none; }
+        }
       `}</style>
-        </nav>
-    );
+    </nav>
+  );
 };
 
 export default Navbar;

@@ -12,23 +12,27 @@ export const AuthProvider = ({ children }) => {
     // Set default API URL
     const API_URL = 'https://subscribly-chi.vercel.app/api';
 
+    // Configure axios defaults
     useEffect(() => {
         const token = localStorage.getItem('token');
         if (token) {
-            checkAuth(token);
+            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            checkAuth();
         } else {
             setLoading(false);
         }
     }, []);
 
-    const checkAuth = async (token) => {
+    const checkAuth = async () => {
         try {
-            const response = await axios.get(`${API_URL}/auth/me`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await axios.get(`${API_URL}/auth/me`);
             setUser(response.data.user);
+            // Re-sync axios header just in case
+            axios.defaults.headers.common['Authorization'] = `Bearer ${localStorage.getItem('token')}`;
         } catch (err) {
             localStorage.removeItem('token');
+            delete axios.defaults.headers.common['Authorization'];
+            setUser(null);
         } finally {
             setLoading(false);
         }
@@ -38,6 +42,7 @@ export const AuthProvider = ({ children }) => {
         const response = await axios.post(`${API_URL}/auth/login`, { email, password });
         const { token, user } = response.data;
         localStorage.setItem('token', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setUser(user);
         return user;
     };
@@ -46,17 +51,19 @@ export const AuthProvider = ({ children }) => {
         const response = await axios.post(`${API_URL}/auth/register`, userData);
         const { token, user } = response.data;
         localStorage.setItem('token', token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         setUser(user);
         return user;
     };
 
     const logout = () => {
         localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout, API_URL }}>
+        <AuthContext.Provider value={{ user, loading, login, register, logout, API_URL, checkAuth }}>
             {children}
         </AuthContext.Provider>
     );

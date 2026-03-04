@@ -1,209 +1,254 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Zap, Shield, BarChart3, Clock } from 'lucide-react';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import { Zap, Shield, Zap as Fast, BarChart3, ArrowRight, Check } from 'lucide-react';
 
 const LandingPage = () => {
-    return (
-        <div className="landing-container">
-            {/* Hero Section */}
-            <section className="hero">
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.8 }}
-                    className="hero-content"
-                >
-                    <div className="badge animate-float">Now in v2.0 - Supabase Powered</div>
-                    <h1>Build and Scale Your <span className="text-gradient">SaaS API</span> Infrastructure</h1>
-                    <p>
-                        The easiest way to manage user subscriptions, API keys, and rate limits.
-                        Focus on your product, we'll handle the infrastructure.
-                    </p>
-                    <div className="hero-actions">
-                        <Link to="/register" className="btn-primary btn-large">Start Building - It's Free</Link>
-                        <Link to="/login" className="btn-glass">View Demo Dashboard</Link>
-                    </div>
-                </motion.div>
+  const { API_URL } = useAuth();
+  const [plans, setPlans] = useState([]);
 
-                <div className="hero-visual">
-                    <div className="glow-orb orb-1"></div>
-                    <div className="glow-orb orb-2"></div>
-                    <div className="dashboard-preview glass-card">
-                        <div className="preview-header">
-                            <div className="dots"><span /><span /><span /></div>
-                            <div className="address">api.subscribly.io/v2/usage</div>
-                        </div>
-                        <div className="preview-body">
-                            <div className="line line-1"></div>
-                            <div className="line line-2"></div>
-                            <div className="line line-3"></div>
-                        </div>
-                    </div>
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/subscriptions/plans`);
+        setPlans(response.data.plans || []);
+      } catch (err) {
+        console.error('Failed to fetch plans');
+      }
+    };
+    fetchPlans();
+  }, [API_URL]);
+
+  return (
+    <div className="landing-page">
+      <section className="hero">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          className="hero-content"
+        >
+          <div className="badge animate-float">Now in Beta 🚀</div>
+          <h1 className="hero-title">
+            Scale Your API <br />
+            <span className="gradient-text">Without Limits</span>
+          </h1>
+          <p className="hero-subtitle">
+            The ultimate subscription infrastructure for modern SaaS.
+            Manage plans, keys, and usage with one line of code.
+          </p>
+          <div className="hero-actions">
+            <Link to="/register" className="btn-primary">
+              Get Started Free <ArrowRight size={20} />
+            </Link>
+            <a href="#features" className="btn-secondary">View Documentation</a>
+          </div>
+        </motion.div>
+
+        <motion.div
+          className="hero-image"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.2, duration: 1 }}
+        >
+          <div className="dashboard-preview glass-card">
+            <div className="preview-header">
+              <div className="dots"><span /><span /><span /></div>
+              <div className="address-bar">api.subscribly.io/v1/dashboard</div>
+            </div>
+            <div className="preview-body">
+              <div className="preview-sidebar">
+                <div className="p-item" /> <div className="p-item" /> <div className="p-item" />
+              </div>
+              <div className="preview-main">
+                <div className="p-stats">
+                  <div className="p-card" /> <div className="p-card" /> <div className="p-card" />
                 </div>
-            </section>
+                <div className="p-chart" />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </section>
 
-            {/* Features */}
-            <section className="features">
-                <div className="feature-grid">
-                    <FeatureCard
-                        icon={<Shield color="#7c3bed" />}
-                        title="Secure API Auth"
-                        desc="Enterprise-grade JWT and unique API key rotations."
-                    />
-                    <FeatureCard
-                        icon={<BarChart3 color="#3b82f6" />}
-                        title="Smart Quotas"
-                        desc="Plan-based rate limiting with millisecond precision."
-                    />
-                    <FeatureCard
-                        icon={<Clock color="#f472b6" />}
-                        title="Instant Setup"
-                        desc="Ready-to-use endpoints for your subscription logic."
-                    />
-                </div>
-            </section>
-
-            <style jsx="true">{`
-        .landing-container {
-          padding-top: 120px;
-          max-width: 1200px;
-          margin: 0 auto;
-          position: relative;
-        }
-        .hero {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 60px;
-          align-items: center;
-          padding: 80px 20px;
-        }
-        .hero-content h1 {
-          font-size: 4rem;
-          margin-bottom: 24px;
-          line-height: 1.1;
-        }
-        .text-gradient {
-          background: linear-gradient(135deg, #7c3bed, #3b82f6);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-        .badge {
-          display: inline-block;
-          background: rgba(124, 59, 237, 0.1);
-          border: 1px solid var(--border-glow);
-          color: var(--primary);
-          padding: 6px 16px;
-          border-radius: 30px;
-          font-weight: 600;
-          margin-bottom: 20px;
-        }
-        .hero-content p {
-          font-size: 1.25rem;
-          color: var(--text-muted);
-          margin-bottom: 40px;
-          max-width: 500px;
-        }
-        .hero-actions {
-          display: flex;
-          gap: 20px;
-        }
-        .btn-large {
-          font-size: 1.1rem;
-          padding: 16px 32px;
-        }
-        .btn-glass {
-          background: var(--bg-glass);
-          border: 1px solid var(--border-glass);
-          padding: 16px 32px;
-          border-radius: 12px;
-          font-weight: 600;
-          color: white;
-          backdrop-filter: blur(10px);
-        }
-        
-        .hero-visual {
-          position: relative;
-        }
-        .glow-orb {
-          position: absolute;
-          width: 300px;
-          height: 300px;
-          filter: blur(80px);
-          opacity: 0.3;
-          z-index: -1;
-        }
-        .orb-1 { top: -50px; left: -50px; background: var(--primary); }
-        .orb-2 { bottom: -50px; right: -50px; background: var(--secondary); }
-        
-        .dashboard-preview {
-          height: 350px;
-          transform: perspective(1000px) rotateY(-15deg) rotateX(5deg);
-          box-shadow: 0 50px 100px rgba(0,0,0,0.6);
-        }
-        .preview-header {
-          padding: 12px;
-          border-bottom: 1px solid var(--border-glass);
-          display: flex;
-          gap: 15px;
-          align-items: center;
-        }
-        .dots { display: flex; gap: 6px; }
-        .dots span { width: 8px; height: 8px; border-radius: 50%; background: var(--border-glass); }
-        .address { font-size: 0.8rem; color: var(--text-dim); }
-        .preview-body { padding: 20px; }
-        .line { height: 10px; background: var(--border-glass); border-radius: 5px; margin-bottom: 15px; }
-        .line-1 { width: 40%; background: var(--primary-glow); }
-        .line-2 { width: 80%; }
-        .line-3 { width: 60%; }
-
-        .feature-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 30px;
-          padding: 100px 20px;
-        }
-
-        @media (max-width: 900px) {
-          .hero { grid-template-columns: 1fr; text-align: center; }
-          .hero-content p { margin: 0 auto 40px; }
-          .hero-actions { justify-content: center; }
-          .feature-grid { grid-template-columns: 1fr; }
-        }
-      `}</style>
+      <section id="features" className="features">
+        <h2 className="section-title">Built for Performance</h2>
+        <div className="features-grid">
+          <FeatureCard
+            icon={<Shield color="#7c3bed" />}
+            title="Secure Auth"
+            desc="Enterprise-grade JWT authentication and API key management."
+          />
+          <FeatureCard
+            icon={<Fast color="#3b82f6" />}
+            title="Ultra Fast"
+            desc="Edge-cached subscription checks with <10ms overhead."
+          />
+          <FeatureCard
+            icon={<BarChart3 color="#f472b6" />}
+            title="Real-time Analytics"
+            desc="Detailed usage tracking and insights for every user."
+          />
         </div>
-    );
+      </section>
+
+      <section className="pricing">
+        <h2 className="section-title">Transparent Pricing</h2>
+        <div className="pricing-grid">
+          {plans.map(plan => (
+            <div key={plan.id} className="pricing-card glass-card">
+              <h3>{plan.name}</h3>
+              <div className="price">${plan.price}<span>/mo</span></div>
+              <ul className="plan-list">
+                <li><Check size={16} color="#10b981" /> {plan.dailyLimit.toLocaleString()} Daily Requests</li>
+                <li><Check size={16} color="#10b981" /> API Key Management</li>
+                <li><Check size={16} color="#10b981" /> Standard Support</li>
+              </ul>
+              <Link to="/register" className="btn-primary full-width">Get Started</Link>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <style jsx="true">{`
+                .landing-page {
+                    color: var(--text-main);
+                }
+                .hero {
+                    min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    text-align: center;
+                    padding: 120px 20px;
+                    gap: 60px;
+                }
+                .hero-content {
+                    max-width: 800px;
+                }
+                .badge {
+                    background: var(--bg-glass);
+                    border: 1px solid var(--border-glass);
+                    padding: 6px 16px;
+                    border-radius: 40px;
+                    font-size: 0.9rem;
+                    display: inline-block;
+                    margin-bottom: 24px;
+                    font-weight: 600;
+                    color: var(--primary);
+                }
+                .hero-title {
+                    font-size: clamp(3rem, 8vw, 5rem);
+                    line-height: 1.1;
+                    margin-bottom: 24px;
+                }
+                .gradient-text {
+                    background: linear-gradient(135deg, var(--primary), var(--secondary));
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                }
+                .hero-subtitle {
+                    font-size: 1.25rem;
+                    color: var(--text-muted);
+                    max-width: 600px;
+                    margin: 0 auto 40px;
+                }
+                .hero-actions {
+                    display: flex;
+                    gap: 20px;
+                    justify-content: center;
+                }
+                .btn-secondary {
+                    background: var(--bg-glass);
+                    border: 1px solid var(--border-glass);
+                    padding: 12px 24px;
+                    border-radius: 12px;
+                    color: var(--text-main);
+                    font-weight: 600;
+                    transition: all 0.3s;
+                }
+                .btn-secondary:hover {
+                    background: rgba(255,255,255,0.08);
+                }
+                .hero-image {
+                    width: 100%;
+                    max-width: 1000px;
+                }
+                .dashboard-preview {
+                    height: 500px;
+                    border-radius: 20px;
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                    box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+                }
+                .preview-header {
+                    background: rgba(0,0,0,0.2);
+                    padding: 12px 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 20px;
+                }
+                .dots { display: flex; gap: 6px; }
+                .dots span { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.1); }
+                .address-bar {
+                    background: rgba(255,255,255,0.05);
+                    padding: 4px 16px;
+                    border-radius: 6px;
+                    font-size: 0.8rem;
+                    color: var(--text-dim);
+                    flex-grow: 1;
+                    text-align: left;
+                }
+                .preview-body { flex-grow: 1; display: flex; }
+                .preview-sidebar { width: 60px; border-right: 1px solid var(--border-glass); padding: 15px; display: flex; flex-direction: column; gap: 15px; }
+                .p-item { width: 30px; height: 30px; border-radius: 8px; background: rgba(255,255,255,0.05); }
+                .preview-main { flex-grow: 1; padding: 30px; display: flex; flex-direction: column; gap: 20px; }
+                .p-stats { display: flex; gap: 20px; }
+                .p-card { flex: 1; height: 80px; border-radius: 12px; background: rgba(255,255,255,0.05); }
+                .p-chart { flex-grow: 1; border-radius: 12px; background: rgba(255,255,255,0.03); }
+
+                .features { padding: 100px 20px; text-align: center; }
+                .section-title { font-size: 2.5rem; margin-bottom: 60px; }
+                .features-grid { 
+                    display: grid; 
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+                    gap: 30px; 
+                    max-width: 1200px; 
+                    margin: 0 auto; 
+                }
+
+                .pricing { padding: 100px 20px; text-align: center; max-width: 1200px; margin: 0 auto; }
+                .pricing-grid { 
+                    display: grid; 
+                    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); 
+                    gap: 30px; 
+                }
+                .pricing-card { padding: 40px; text-align: left; display: flex; flex-direction: column; gap: 20px; }
+                .pricing-card h3 { font-size: 1.5rem; }
+                .plan-list { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+                .full-width { width: 100%; text-align: center; }
+            `}</style>
+    </div>
+  );
 };
 
 const FeatureCard = ({ icon, title, desc }) => (
-    <motion.div
-        whileHover={{ y: -10 }}
-        className="feature-card glass-card"
-    >
-        <div className="feature-icon">{icon}</div>
-        <h3>{title}</h3>
-        <p>{desc}</p>
-        <style jsx="true">{`
-      .feature-card {
-        padding: 40px;
-        text-align: center;
-      }
-      .feature-icon {
-        width: 60px;
-        height: 60px;
-        background: rgba(255,255,255,0.05);
-        border-radius: 15px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 24px;
-      }
-      .feature-card p {
-        color: var(--text-muted);
-        margin-top: 12px;
-      }
-    `}</style>
-    </motion.div>
+  <div className="feature-card glass-card">
+    <div className="feature-icon">{icon}</div>
+    <h3>{title}</h3>
+    <p>{desc}</p>
+    <style jsx="true">{`
+            .feature-card { padding: 40px; text-align: left; transition: transform 0.3s; }
+            .feature-card:hover { transform: translateY(-10px); }
+            .feature-icon { margin-bottom: 24px; padding: 12px; background: var(--bg-glass); border-radius: 12px; width: fit-content; }
+            .feature-card h3 { margin-bottom: 12px; font-size: 1.4rem; }
+            .feature-card p { color: var(--text-muted); line-height: 1.6; }
+        `}</style>
+  </div>
 );
 
 export default LandingPage;

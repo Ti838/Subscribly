@@ -2,152 +2,224 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
-import { Activity, Key, CreditCard, Users, Settings, Check, Copy } from 'lucide-react';
+import { Activity, Key, CreditCard, Users, Settings, Check, Copy, RefreshCw } from 'lucide-react';
 
 const Dashboard = () => {
-    const { user, API_URL } = useAuth();
-    const [plans, setPlans] = useState([]);
-    const [loadingPlans, setLoadingPlans] = useState(true);
-    const [copied, setCopied] = useState(false);
+  const { user, API_URL, checkAuth } = useAuth();
+  const [plans, setPlans] = useState([]);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [copied, setCopied] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-    useEffect(() => {
-        fetchPlans();
-    }, []);
+  useEffect(() => {
+    fetchPlans();
+  }, []);
 
-    const fetchPlans = async () => {
-        try {
-            const response = await axios.get(`${API_URL}/subscriptions/plans`);
-            setPlans(response.data.plans);
-        } catch (err) {
-            console.error('Failed to fetch plans');
-        } finally {
-            setLoadingPlans(false);
-        }
-    };
+  const fetchPlans = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/subscriptions/plans`);
+      setPlans(response.data.plans || []);
+    } catch (err) {
+      console.error('Failed to fetch plans');
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
 
-    const copyToClipboard = (text) => {
-        navigator.clipboard.writeText(text);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-    };
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await checkAuth();
+    await fetchPlans();
+    setIsRefreshing(false);
+  };
 
-    return (
-        <div className="dashboard-layout">
-            <aside className="sidebar glass-card">
-                <div className="sidebar-links">
-                    <SidebarItem icon={<Activity size={20} />} label="Overview" active={true} />
-                    <SidebarItem icon={<Key size={20} />} label="API Keys" />
-                    <SidebarItem icon={<CreditCard size={20} />} label="Billing" />
-                    <SidebarItem icon={<Users size={20} />} label="Team" />
-                    <SidebarItem icon={<Settings size={20} />} label="Settings" />
-                </div>
-            </aside>
+  const copyToClipboard = (text) => {
+    if (!text) return;
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
-            <main className="dashboard-content">
-                <header className="dashboard-header">
-                    <div>
-                        <h1>Welcome, {user?.name.split(' ')[0]}!</h1>
-                        <p>Your API infrastructure is healthy and running.</p>
-                    </div>
-                </header>
+  return (
+    <div className="dashboard-layout">
+      <aside className="sidebar glass-card">
+        <div className="sidebar-links">
+          <SidebarItem icon={<Activity size={20} />} label="Overview" active={true} />
+          <SidebarItem icon={<Key size={20} />} label="API Keys" />
+          <SidebarItem icon={<CreditCard size={20} />} label="Billing" />
+          <SidebarItem icon={<Users size={20} />} label="Team" />
+          <SidebarItem icon={<Settings size={20} />} label="Settings" />
+        </div>
+      </aside>
 
-                <div className="stats-grid">
-                    <StatCard title="API Requests" value="12,482" change="+12%" />
-                    <StatCard title="Active Users" value="842" change="+5%" />
-                    <StatCard title="Avg Latency" value="124ms" change="-18%" color="#10b981" />
-                </div>
+      <main className="dashboard-content">
+        <header className="dashboard-header">
+          <div className="header-info">
+            <h1>Welcome back, {user?.name.split(' ')[0]}!</h1>
+            <p>Your API infrastructure is healthy and running.</p>
+          </div>
+          <button
+            className={`btn-refresh ${isRefreshing ? 'spinning' : ''}`}
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+          >
+            <RefreshCw size={20} />
+          </button>
+        </header>
 
-                <section className="dashboard-section glass-card">
-                    <div className="section-header">
-                        <h3>Your Active API Key</h3>
-                        <span className="badge-live">Live Mode</span>
-                    </div>
-                    <div className="api-key-box">
-                        <code>{user?.apiKey || 'sk_live_... (Subscribe to a plan to see your key)'}</code>
-                        <button className="btn-copy" onClick={() => copyToClipboard(user?.apiKey)}>
-                            {copied ? <Check size={16} color="#10b981" /> : <Copy size={16} />}
-                            <span>{copied ? 'Copied' : 'Copy'}</span>
-                        </button>
-                    </div>
-                </section>
+        <div className="stats-grid">
+          <StatCard
+            title="API Requests"
+            value={user?.usage?.totalRequests || '0'}
+            change={`${user?.usage?.dailyCount || 0} today`}
+          />
+          <StatCard
+            title="Subscription"
+            value={user?.subscription?.planName || 'Free'}
+            change={user?.subscription?.status || 'Active'}
+            color="#3b82f6"
+          />
+          <StatCard
+            title="Daily Limit"
+            value={user?.subscription?.dailyLimit || '100'}
+            change="Requests per day"
+            color="#10b981"
+          />
+        </div>
 
-                <section className="dashboard-section">
-                    <h3>Upgrade Your Plan</h3>
-                    <div className="plans-grid">
-                        {loadingPlans ? (
-                            <div className="loader">Loading plans...</div>
-                        ) : (
-                            plans.map(plan => (
-                                <PlanCard key={plan.id} plan={plan} isCurrent={user?.subscription?.planId === plan.id} />
-                            ))
-                        )}
-                    </div>
-                </section>
-            </main>
+        <section className="dashboard-section glass-card">
+          <div className="section-header">
+            <div>
+              <h3>Your Active API Key</h3>
+              <p className="subtitle">Use this key to authenticate your requests</p>
+            </div>
+            <span className="badge-live">Live Mode</span>
+          </div>
+          <div className="api-key-box">
+            <code>{user?.apiKey || 'Generating your key...'}</code>
+            <button className="btn-copy" onClick={() => copyToClipboard(user?.apiKey)}>
+              {copied ? <Check size={16} color="#10b981" /> : <Copy size={16} />}
+              <span>{copied ? 'Copied' : 'Copy'}</span>
+            </button>
+          </div>
+        </section>
 
-            <style jsx="true">{`
+        <section className="dashboard-section">
+          <div className="section-header">
+            <h3>Subscription Plans</h3>
+            <p className="subtitle">Choose the plan that fits your needs</p>
+          </div>
+          <div className="plans-grid">
+            {loadingPlans ? (
+              <div className="loader-container">
+                <div className="spinner"></div>
+                <p>Fetching the latest plans...</p>
+              </div>
+            ) : (
+              plans.map(plan => (
+                <PlanCard key={plan.id} plan={plan} isCurrent={user?.subscription?.planId === plan.id} />
+              ))
+            )}
+          </div>
+        </section>
+      </main>
+
+      <style jsx="true">{`
         .dashboard-layout {
-          padding: 120px 20px 40px;
-          max-width: 1400px;
+          padding: 100px 20px 40px;
+          max-width: 1200px;
           margin: 0 auto;
           display: grid;
           grid-template-columns: 240px 1fr;
-          gap: 40px;
+          gap: 30px;
         }
         .sidebar {
           height: fit-content;
           padding: 20px;
           position: sticky;
-          top: 120px;
+          top: 100px;
+          border-radius: 16px;
         }
         .sidebar-links {
           display: flex;
           flex-direction: column;
-          gap: 5px;
+          gap: 4px;
         }
         .dashboard-content {
           display: flex;
           flex-direction: column;
-          gap: 40px;
+          gap: 30px;
+        }
+        .dashboard-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
         }
         .dashboard-header h1 {
-          font-size: 2.5rem;
-          margin-bottom: 8px;
+          font-size: 2.2rem;
+          margin-bottom: 4px;
+          background: linear-gradient(to right, var(--text-main), var(--primary));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
         }
         .dashboard-header p {
           color: var(--text-muted);
+          font-size: 1.1rem;
+        }
+        .btn-refresh {
+          background: var(--bg-glass);
+          border: 1px solid var(--border-glass);
+          color: var(--text-muted);
+          padding: 10px;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: all 0.3s;
+        }
+        .btn-refresh:hover {
+          color: var(--primary);
+          border-color: var(--primary);
+        }
+        .spinning {
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
         }
         .stats-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          grid-template-columns: repeat(3, 1fr);
           gap: 20px;
         }
         .dashboard-section {
           padding: 30px;
+          border-radius: 20px;
+        }
+        .subtitle {
+          font-size: 0.9rem;
+          color: var(--text-dim);
+          margin-top: 4px;
         }
         .section-header {
           display: flex;
           justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-        .section-header h3 {
-          color: var(--text-muted);
+          align-items: flex-start;
+          margin-bottom: 24px;
         }
         .badge-live {
-          font-size: 0.75rem;
-          padding: 4px 10px;
+          font-size: 0.7rem;
+          padding: 4px 12px;
           background: rgba(16, 185, 129, 0.1);
           color: #10b981;
           border: 1px solid rgba(16, 185, 129, 0.2);
           border-radius: 20px;
-          font-weight: 700;
-          text-transform: uppercase;
+          font-weight: 800;
+          letter-spacing: 0.05em;
         }
         .api-key-box {
-          background: rgba(0,0,0,0.3);
-          padding: 15px 20px;
-          border-radius: 12px;
+          background: rgba(0,0,0,0.2);
+          padding: 16px 20px;
+          border-radius: 14px;
           border: 1px solid var(--border-glass);
           display: flex;
           justify-content: space-between;
@@ -156,53 +228,64 @@ const Dashboard = () => {
         .api-key-box code {
           color: var(--primary);
           font-size: 1.1rem;
-          font-family: monospace;
-          letter-spacing: 0.1em;
+          font-family: 'JetBrains Mono', monospace;
+          letter-spacing: 0.05em;
         }
         .btn-copy {
           background: var(--bg-glass);
           border: 1px solid var(--border-glass);
-          padding: 8px 16px;
-          border-radius: 8px;
-          color: white;
+          padding: 8px 14px;
+          border-radius: 10px;
+          color: var(--text-main);
           cursor: pointer;
           display: flex;
           align-items: center;
           gap: 8px;
+          font-weight: 600;
+          font-size: 0.85rem;
           transition: all 0.2s;
         }
         .btn-copy:hover {
-          background: rgba(255,255,255,0.1);
+          background: rgba(255,255,255,0.08);
         }
         .plans-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 20px;
-          margin-top: 20px;
+        }
+        .loader-container {
+          grid-column: 1 / -1;
+          padding: 60px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 15px;
+          color: var(--text-dim);
         }
         @media (max-width: 1000px) {
-          .dashboard-layout { grid-template-columns: 1fr; }
+          .dashboard-layout { grid-template-columns: 1fr; padding-top: 100px; }
           .sidebar { display: none; }
+          .stats-grid { grid-template-columns: 1fr; }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 };
 
 const PlanCard = ({ plan, isCurrent }) => (
-    <div className={`plan-card glass-card ${isCurrent ? 'active' : ''}`}>
-        {isCurrent && <div className="current-badge">Active Plan</div>}
-        <h4>{plan.name}</h4>
-        <div className="price">${plan.price}<span>/mo</span></div>
-        <ul className="plan-features">
-            <li><Check size={14} /> {plan.dailyLimit} requests / day</li>
-            <li><Check size={14} /> REST API Access</li>
-            <li><Check size={14} /> Priority Support</li>
-        </ul>
-        <button className={`btn-plan ${isCurrent ? 'btn-current' : 'btn-primary'}`}>
-            {isCurrent ? 'Manage' : 'Upgrade Now'}
-        </button>
-        <style jsx="true">{`
+  <div className={`plan-card glass-card ${isCurrent ? 'active' : ''}`}>
+    {isCurrent && <div className="current-badge">Active Plan</div>}
+    <h4>{plan.name}</h4>
+    <div className="price">${plan.price}<span>/mo</span></div>
+    <ul className="plan-features">
+      <li><Check size={14} className="check-icon" /> {plan.dailyLimit.toLocaleString()} requests / day</li>
+      <li><Check size={14} className="check-icon" /> REST API Access</li>
+      <li><Check size={14} className="check-icon" /> Community Support</li>
+    </ul>
+    <button className={`btn-plan ${isCurrent ? 'btn-current' : 'btn-primary'}`}>
+      {isCurrent ? 'Manage Plan' : 'Select Plan'}
+    </button>
+    <style jsx="true">{`
       .plan-card {
         padding: 30px;
         display: flex;
@@ -212,30 +295,35 @@ const PlanCard = ({ plan, isCurrent }) => (
         overflow: hidden;
       }
       .plan-card.active {
-        border-color: var(--primary);
-        box-shadow: 0 0 30px var(--primary-glow);
+        border: 2px solid var(--primary);
+        box-shadow: 0 0 40px var(--primary-glow);
       }
       .current-badge {
         position: absolute;
-        top: 15px;
-        right: -35px;
+        top: 12px;
+        right: -30px;
         background: var(--primary);
         color: white;
-        padding: 4px 40px;
-        font-size: 0.7rem;
-        font-weight: 700;
+        padding: 4px 35px;
+        font-size: 0.65rem;
+        font-weight: 900;
         transform: rotate(45deg);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
       .plan-card h4 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
+        color: var(--text-main);
       }
       .price {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
         font-weight: 800;
+        color: var(--text-main);
       }
       .price span {
         font-size: 1rem;
         color: var(--text-muted);
+        font-weight: 500;
       }
       .plan-features {
         list-style: none;
@@ -247,27 +335,31 @@ const PlanCard = ({ plan, isCurrent }) => (
         display: flex;
         align-items: center;
         gap: 10px;
-        font-size: 0.9rem;
+        font-size: 0.95rem;
         color: var(--text-muted);
+      }
+      .check-icon {
+        color: var(--primary);
       }
       .btn-plan {
         width: 100%;
         margin-top: 10px;
+        font-size: 0.95rem;
       }
       .btn-current {
         background: rgba(255,255,255,0.05);
         border: 1px solid var(--border-glass);
-        color: white;
+        color: var(--text-main);
       }
     `}</style>
-    </div>
+  </div>
 );
 
 const SidebarItem = ({ icon, label, active }) => (
-    <div className={`sidebar-item ${active ? 'active' : ''}`}>
-        {icon}
-        <span>{label}</span>
-        <style jsx="true">{`
+  <div className={`sidebar-item ${active ? 'active' : ''}`}>
+    {icon}
+    <span>{label}</span>
+    <style jsx="true">{`
       .sidebar-item {
         display: flex;
         align-items: center;
@@ -276,7 +368,9 @@ const SidebarItem = ({ icon, label, active }) => (
         border-radius: 12px;
         cursor: pointer;
         color: var(--text-muted);
-        transition: all 0.3s;
+        transition: all 0.2s;
+        font-weight: 600;
+        font-size: 0.95rem;
       }
       .sidebar-item:hover {
         background: rgba(255,255,255,0.05);
@@ -288,36 +382,40 @@ const SidebarItem = ({ icon, label, active }) => (
         border: 1px solid var(--border-glow);
       }
     `}</style>
-    </div>
+  </div>
 );
 
 const StatCard = ({ title, value, change, color = '#7c3bed' }) => (
-    <motion.div whileHover={{ y: -5 }} className="stat-card glass-card">
-        <span className="stat-title">{title}</span>
-        <div className="stat-value">{value}</div>
-        <span className="stat-change" style={{ color }}>{change} this month</span>
-        <style jsx="true">{`
+  <motion.div whileHover={{ y: -5 }} className="stat-card glass-card">
+    <span className="stat-title">{title}</span>
+    <div className="stat-value">{value}</div>
+    <span className="stat-change" style={{ color }}>{change}</span>
+    <style jsx="true">{`
       .stat-card {
         padding: 24px;
-        border-bottom: 4px solid ${color};
+        border-bottom: 3px solid ${color};
+        border-radius: 16px;
       }
       .stat-title {
         color: var(--text-dim);
-        font-size: 0.9rem;
-        font-weight: 600;
+        font-size: 0.85rem;
+        font-weight: 700;
         text-transform: uppercase;
+        letter-spacing: 0.05em;
       }
       .stat-value {
-        font-size: 2rem;
+        font-size: 2.2rem;
         font-weight: 800;
-        margin: 5px 0;
+        margin: 8px 0;
+        color: var(--text-main);
       }
       .stat-change {
         font-size: 0.85rem;
         font-weight: 600;
+        opacity: 0.8;
       }
     `}</style>
-    </motion.div>
+  </motion.div>
 );
 
 export default Dashboard;
