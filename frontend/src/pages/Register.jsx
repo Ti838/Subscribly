@@ -29,14 +29,20 @@ const Register = () => {
     };
 
     return (
-        <div className="auth-container">
+      <div className="auth-container page-shell">
+        <div className="page-orb orb-a" />
+        <div className="page-orb orb-b" />
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="auth-card glass-card"
+          initial={{ opacity: 0, y: 18, scale: 0.98 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          whileHover={{ y: -4 }}
+          className="auth-card glass-card animate-pulse-glow"
             >
                 <div className="auth-header">
-                    <Zap size={40} className="logo-icon animate-float" fill="#7c3bed" color="#7c3bed" />
+            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }}>
+              <Zap size={40} className="logo-icon animate-float" fill="#7c3bed" color="#7c3bed" />
+            </motion.div>
                     <h1>Create account</h1>
                     <p>Start managing your API infrastructure today</p>
                 </div>
@@ -96,6 +102,8 @@ const Register = () => {
           justify-content: center;
           padding: 20px;
           background: radial-gradient(circle at center, rgba(124, 59, 237, 0.15) 0%, transparent 70%);
+          position: relative;
+          overflow: hidden;
         }
         .auth-card {
           width: 100%;
@@ -159,6 +167,12 @@ const Register = () => {
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
+        }
+        .logo-icon {
+          filter: drop-shadow(0 0 18px rgba(124, 59, 237, 0.35));
+        }
+        .auth-card:hover {
+          border-color: rgba(124, 59, 237, 0.24);
         }
       `}</style>
         </div>

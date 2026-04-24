@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Zap, LogOut, LayoutDashboard, User, Moon, Sun } from 'lucide-react';
@@ -7,9 +8,16 @@ import { Zap, LogOut, LayoutDashboard, User, Moon, Sun } from 'lucide-react';
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const location = useLocation();
+  const isPublicSite = !location.pathname.startsWith('/dashboard');
 
   return (
-    <nav className="navbar glass-card">
+    <motion.nav
+      className="navbar glass-card"
+      initial={{ y: -24, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+    >
       <div className="nav-container">
         <Link to="/" className="nav-logo">
           <Zap size={24} className="logo-icon" fill="var(--primary)" color="var(--primary)" />
@@ -17,9 +25,22 @@ const Navbar = () => {
         </Link>
 
         <div className="nav-links">
-          <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle Theme">
+          {isPublicSite && (
+            <div className="public-links hide-mobile">
+              <a href={location.pathname === '/' ? '#features' : '/#features'} className="nav-link-subtle">Features</a>
+              <a href={location.pathname === '/' ? '#pricing' : '/#pricing'} className="nav-link-subtle">Pricing</a>
+              <Link to="/docs" className="nav-link-subtle">Docs</Link>
+            </div>
+          )}
+          <motion.button
+            onClick={toggleTheme}
+            className="theme-toggle"
+            aria-label="Toggle Theme"
+            whileHover={{ rotate: 12, scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-          </button>
+          </motion.button>
 
           {user ? (
             <>
@@ -142,7 +163,7 @@ const Navbar = () => {
           .hide-mobile { display: none; }
         }
       `}</style>
-    </nav>
+    </motion.nav>
   );
 };
 

@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import axios from 'axios';
 import { Activity, Key, CreditCard, Users, Settings, Check, Copy, RefreshCw } from 'lucide-react';
+
+const dashboardVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1, delayChildren: 0.05 },
+  },
+};
+
+const slideUp = {
+  hidden: { opacity: 0, y: 18 },
+  show: { opacity: 1, y: 0 },
+};
 
 const Dashboard = () => {
   const { user, API_URL, checkAuth } = useAuth();
@@ -10,6 +23,7 @@ const Dashboard = () => {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [copied, setCopied] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     fetchPlans();
@@ -41,8 +55,11 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="dashboard-layout">
-      <aside className="sidebar glass-card">
+    <motion.div className="dashboard-layout page-shell" variants={dashboardVariants} initial="hidden" animate="show">
+      <div className="page-orb orb-a" />
+      <div className="page-orb orb-b" />
+
+      <motion.aside className="sidebar glass-card" variants={slideUp}>
         <div className="sidebar-links">
           <SidebarItem icon={<Activity size={20} />} label="Overview" active={true} />
           <SidebarItem icon={<Key size={20} />} label="API Keys" />
@@ -50,50 +67,55 @@ const Dashboard = () => {
           <SidebarItem icon={<Users size={20} />} label="Team" />
           <SidebarItem icon={<Settings size={20} />} label="Settings" />
         </div>
-      </aside>
+      </motion.aside>
 
-      <main className="dashboard-content">
-        <header className="dashboard-header">
+      <motion.main className="dashboard-content" variants={dashboardVariants}>
+        <motion.header className="dashboard-header" variants={slideUp}>
           <div className="header-info">
             <h1>Welcome back, {user?.name.split(' ')[0]}!</h1>
             <p>Your API infrastructure is healthy and running.</p>
           </div>
-          <button
+          <motion.button
             className={`btn-refresh ${isRefreshing ? 'spinning' : ''}`}
             onClick={handleRefresh}
             disabled={isRefreshing}
+            whileHover={reduceMotion ? undefined : { scale: 1.05, rotate: 8 }}
+            whileTap={reduceMotion ? undefined : { scale: 0.95 }}
           >
             <RefreshCw size={20} />
-          </button>
-        </header>
+          </motion.button>
+        </motion.header>
 
-        <div className="stats-grid">
+        <motion.div className="stats-grid" variants={dashboardVariants}>
           <StatCard
             title="API Requests"
             value={user?.usage?.totalRequests || '0'}
             change={`${user?.usage?.dailyCount || 0} today`}
+            index={0}
           />
           <StatCard
             title="Subscription"
             value={user?.subscription?.planName || 'Free'}
             change={user?.subscription?.status || 'Active'}
             color="#3b82f6"
+            index={1}
           />
           <StatCard
             title="Daily Limit"
             value={user?.subscription?.dailyLimit || '100'}
             change="Requests per day"
             color="#10b981"
+            index={2}
           />
-        </div>
+        </motion.div>
 
-        <section className="dashboard-section glass-card">
+        <motion.section className="dashboard-section glass-card animate-pulse-glow" variants={slideUp}>
           <div className="section-header">
             <div>
               <h3>Your Active API Key</h3>
               <p className="subtitle">Use this key to authenticate your requests</p>
             </div>
-            <span className="badge-live">Live Mode</span>
+            <span className="badge-live"><span className="live-dot" /> Live Mode</span>
           </div>
           <div className="api-key-box">
             <code>{user?.apiKey || 'Generating your key...'}</code>
@@ -102,9 +124,9 @@ const Dashboard = () => {
               <span>{copied ? 'Copied' : 'Copy'}</span>
             </button>
           </div>
-        </section>
+        </motion.section>
 
-        <section className="dashboard-section">
+        <motion.section className="dashboard-section" variants={slideUp}>
           <div className="section-header">
             <h3>Subscription Plans</h3>
             <p className="subtitle">Choose the plan that fits your needs</p>
@@ -121,24 +143,27 @@ const Dashboard = () => {
               ))
             )}
           </div>
-        </section>
-      </main>
+        </motion.section>
+      </motion.main>
 
       <style jsx="true">{`
         .dashboard-layout {
-          padding: 100px 20px 40px;
+          padding: 24px 20px 40px;
           max-width: 1200px;
           margin: 0 auto;
           display: grid;
           grid-template-columns: 240px 1fr;
           gap: 30px;
+          position: relative;
+          z-index: 1;
         }
         .sidebar {
           height: fit-content;
           padding: 20px;
           position: sticky;
-          top: 100px;
-          border-radius: 16px;
+          top: 110px;
+          border-radius: 20px;
+          transform: translateZ(0);
         }
         .sidebar-links {
           display: flex;
@@ -167,17 +192,18 @@ const Dashboard = () => {
           font-size: 1.1rem;
         }
         .btn-refresh {
-          background: var(--bg-glass);
+          background: linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
           border: 1px solid var(--border-glass);
           color: var(--text-muted);
           padding: 10px;
-          border-radius: 12px;
+          border-radius: 14px;
           cursor: pointer;
-          transition: all 0.3s;
+          transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
         }
         .btn-refresh:hover {
           color: var(--primary);
           border-color: var(--primary);
+          box-shadow: 0 0 0 6px var(--primary-glow);
         }
         .spinning {
           animation: spin 1s linear infinite;
@@ -193,7 +219,7 @@ const Dashboard = () => {
         }
         .dashboard-section {
           padding: 30px;
-          border-radius: 20px;
+          border-radius: 24px;
         }
         .subtitle {
           font-size: 0.9rem;
@@ -208,22 +234,35 @@ const Dashboard = () => {
         }
         .badge-live {
           font-size: 0.7rem;
-          padding: 4px 12px;
-          background: rgba(16, 185, 129, 0.1);
+          padding: 5px 12px;
+          background: rgba(16, 185, 129, 0.12);
           color: #10b981;
           border: 1px solid rgba(16, 185, 129, 0.2);
           border-radius: 20px;
           font-weight: 800;
           letter-spacing: 0.05em;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .live-dot {
+          width: 8px;
+          height: 8px;
+          border-radius: 999px;
+          background: #10b981;
+          box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+          animation: livePulse 1.6s ease-in-out infinite;
         }
         .api-key-box {
-          background: rgba(0,0,0,0.2);
+          background: linear-gradient(145deg, rgba(0,0,0,0.28), rgba(255,255,255,0.02));
           padding: 16px 20px;
           border-radius: 14px;
           border: 1px solid var(--border-glass);
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 16px;
+          overflow: hidden;
         }
         .api-key-box code {
           color: var(--primary);
@@ -232,7 +271,7 @@ const Dashboard = () => {
           letter-spacing: 0.05em;
         }
         .btn-copy {
-          background: var(--bg-glass);
+          background: rgba(255,255,255,0.04);
           border: 1px solid var(--border-glass);
           padding: 8px 14px;
           border-radius: 10px;
@@ -262,23 +301,54 @@ const Dashboard = () => {
           gap: 15px;
           color: var(--text-dim);
         }
+        .plan-card {
+          transform-style: preserve-3d;
+        }
+        .plan-card::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(124, 59, 237, 0.08), transparent 40%, rgba(59, 130, 246, 0.08));
+          opacity: 0;
+          transition: opacity 0.3s ease;
+          pointer-events: none;
+        }
+        .plan-card:hover::before {
+          opacity: 1;
+        }
+        @keyframes livePulse {
+          0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+          }
+          50% {
+            transform: scale(1.2);
+            box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+          }
+        }
         @media (max-width: 1000px) {
-          .dashboard-layout { grid-template-columns: 1fr; padding-top: 100px; }
+          .dashboard-layout { grid-template-columns: 1fr; padding-top: 88px; }
           .sidebar { display: none; }
           .stats-grid { grid-template-columns: 1fr; }
         }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 
 const PlanCard = ({ plan, isCurrent }) => (
-  <div className={`plan-card glass-card ${isCurrent ? 'active' : ''}`}>
+  <motion.div
+    className={`plan-card glass-card ${isCurrent ? 'active' : ''}`}
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    whileHover={{ y: -8, rotateX: 4, rotateY: -4 }}
+    transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+  >
     {isCurrent && <div className="current-badge">Active Plan</div>}
     <h4>{plan.name}</h4>
     <div className="price">${plan.price}<span>/mo</span></div>
     <ul className="plan-features">
-      <li><Check size={14} className="check-icon" /> {plan.dailyLimit.toLocaleString()} requests / day</li>
+      <li><Check size={14} className="check-icon" /> {plan.dailyLimit === -1 ? 'Unlimited requests / day' : `${plan.dailyLimit.toLocaleString()} requests / day`}</li>
       <li><Check size={14} className="check-icon" /> REST API Access</li>
       <li><Check size={14} className="check-icon" /> Community Support</li>
     </ul>
@@ -352,11 +422,11 @@ const PlanCard = ({ plan, isCurrent }) => (
         color: var(--text-main);
       }
     `}</style>
-  </div>
+  </motion.div>
 );
 
 const SidebarItem = ({ icon, label, active }) => (
-  <div className={`sidebar-item ${active ? 'active' : ''}`}>
+  <motion.div className={`sidebar-item ${active ? 'active' : ''}`} whileHover={{ x: 4 }} whileTap={{ scale: 0.98 }}>
     {icon}
     <span>{label}</span>
     <style jsx="true">{`
@@ -382,11 +452,17 @@ const SidebarItem = ({ icon, label, active }) => (
         border: 1px solid var(--border-glow);
       }
     `}</style>
-  </div>
+  </motion.div>
 );
 
-const StatCard = ({ title, value, change, color = '#7c3bed' }) => (
-  <motion.div whileHover={{ y: -5 }} className="stat-card glass-card">
+const StatCard = ({ title, value, change, color = '#7c3bed', index = 0 }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 18 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay: index * 0.08, duration: 0.45 }}
+    whileHover={{ y: -6, scale: 1.01 }}
+    className="stat-card glass-card"
+  >
     <span className="stat-title">{title}</span>
     <div className="stat-value">{value}</div>
     <span className="stat-change" style={{ color }}>{change}</span>
@@ -394,7 +470,9 @@ const StatCard = ({ title, value, change, color = '#7c3bed' }) => (
       .stat-card {
         padding: 24px;
         border-bottom: 3px solid ${color};
-        border-radius: 16px;
+        border-radius: 18px;
+        position: relative;
+        overflow: hidden;
       }
       .stat-title {
         color: var(--text-dim);
